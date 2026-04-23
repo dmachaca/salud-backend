@@ -45,15 +45,5 @@ public class Establecimiento extends BaseEntity {
     @JoinColumn(name = "tipo_establecimiento_id")
     private TipoEstablecimiento tipoEstablecimiento;
 
-    // =========================
-    // AUDITORÍA (FK)
-    // =========================
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creado_por_id")
-    private Usuario creadoPor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "actualizado_por_id")
-    private Usuario actualizadoPor;
 }

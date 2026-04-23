@@ -47,15 +47,4 @@ public class PersonalSalud extends BaseEntity {
     @Column(name = "colegiatura", length = 50, unique = true)
     private String colegiatura;
 
-    // =========================
-    // AUDITORÍA (FK)
-    // =========================
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creado_por_id")
-    private Usuario creadoPor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "actualizado_por_id")
-    private Usuario actualizadoPor;
 }

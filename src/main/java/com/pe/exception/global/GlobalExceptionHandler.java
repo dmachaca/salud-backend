@@ -1,66 +1,116 @@
 package com.pe.exception.global;
 
-
+import com.pe.exception.dto.ErrorResponse;
+import com.pe.exception.dto.ValidationError;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.Locale;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus httpStatus,
-                                                                   String errorMessage,
-                                                                   String customMessage) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("status", httpStatus.value());
-        body.put("error", errorMessage);
-        body.put("message", customMessage);
-        return new ResponseEntity<>(body, httpStatus);
-    }
+    private final MessageSource messageSource;
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
-                errors.put(fieldError.getField(), fieldError.getDefaultMessage())
+    private ResponseEntity<ErrorResponse> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            List<ValidationError> details
+    ) {
+        return ResponseEntity.status(status).body(
+                ErrorResponse.builder()
+                        .timestamp(OffsetDateTime.now())
+                        .status(status.value())
+                        .error(status.getReasonPhrase())
+                        .message(message)
+                        .details(details)
+                        .build()
         );
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleMalformedJson(HttpMessageNotReadableException ex) {
+    // =========================
+    // VALIDATION
+    // =========================
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex
+    ) {
+
+        List<ValidationError> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> ValidationError.builder()
+                        .field(error.getField())
+                        .rejectedValue(error.getRejectedValue())
+                        .message(messageSource.getMessage(error, Locale.getDefault()))
+                        .build())
+                .toList();
+
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Bad Request",
-                "Ocurrió un error al procesar la solicitud. Verifique los datos enviados."
+                "Validation error",
+                errors
         );
     }
 
+    // =========================
+    // MALFORMED JSON
+    // =========================
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMalformedJson() {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Malformed JSON request",
+                null
+        );
+    }
+
+    // =========================
+    // METHOD NOT ALLOWED
+    // =========================
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<Map<String, Object>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<ErrorResponse> handleMethodNotAllowed() {
         return buildErrorResponse(
                 HttpStatus.METHOD_NOT_ALLOWED,
-                "Method Not Allowed",
-                "Ocurrió un error al procesar la solicitud. Verifique el método HTTP utilizado."
+                "HTTP method not allowed",
+                null
         );
     }
 
+    // =========================
+    // ACCESS DENIED
+    // =========================
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ErrorResponse> handleAccessDenied() {
         return buildErrorResponse(
                 HttpStatus.FORBIDDEN,
-                "Forbidden",
-                "No tiene permisos para acceder a este recurso."
+                "Access denied",
+                null
+        );
+    }
+
+    // =========================
+    // GENERAL ERROR
+    // =========================
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+
+        ex.printStackTrace(); // log temporal
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal server error",
+                null
         );
     }
 }
