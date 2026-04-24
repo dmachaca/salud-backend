@@ -1,5 +1,6 @@
 package com.pe.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
@@ -30,6 +31,7 @@ public class PersonalSalud extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "persona_id")
+    @JsonIgnore
     private Persona persona;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -38,25 +38,4 @@ public class Paciente extends BaseEntity {
     )
     private Persona persona;
 
-    // =========================
-    // AUDITORÍA (SELF FK → USUARIO)
-    // =========================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "creado_por_id",
-            foreignKey = @ForeignKey(name = "fk_paciente_creado"),
-            insertable = false,
-            updatable = false
-    )
-    private Usuario creadoPor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "actualizado_por_id",
-            foreignKey = @ForeignKey(name = "fk_paciente_actualizado"),
-            insertable = false,
-            updatable = false
-    )
-    private Usuario actualizadoPor;
-
 }

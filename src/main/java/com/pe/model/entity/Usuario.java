@@ -1,10 +1,13 @@
 package com.pe.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Set;
 
 @Getter
 @Setter
@@ -48,15 +51,9 @@ public class Usuario extends BaseEntity {
     @Column(name = "correo", nullable = false, length = 100)
     private String correo;
 
-    // =========================
-    // AUDITORÍA (SELF FK)
-    // =========================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creado_por_id", foreignKey = @ForeignKey(name = "fk_usuario_creado"), insertable = false, updatable = false)
-    private Usuario creadoPor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "actualizado_por_id", foreignKey = @ForeignKey(name = "fk_usuario_actualizado"), insertable = false, updatable = false)
-    private Usuario actualizadoPor;
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<UsuarioRol> usuarioRoles;
 
 }
+
