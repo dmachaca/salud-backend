@@ -9,4 +9,8 @@ public interface IAuthService {
     AuthOutputDto login(LoginInputDto request);
 
     AuthOutputDto refresh(RefreshInputDto request);
+
+    void logout(String refreshToken);
+
+    void logoutAll(Long userId); // opcional enterprise
 }

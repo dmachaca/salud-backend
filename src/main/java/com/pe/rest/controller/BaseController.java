@@ -3,6 +3,7 @@ package com.pe.rest.controller;
 import com.pe.exception.*;
 import com.pe.model.dto.response.DownloadFileOutputDto;
 import com.pe.model.dto.response.GenericResponse;
+import com.pe.security.model.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -58,4 +59,5 @@ public abstract class BaseController {
             throw e;
         }
     }
+
 }

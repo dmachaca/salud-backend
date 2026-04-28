@@ -1,11 +1,12 @@
 package com.pe.security.service;
 
-import com.pe.model.entity.Usuario;
 import com.pe.model.entity.RefreshToken;
+import com.pe.model.entity.Usuario;
 import com.pe.repository.auth.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
@@ -15,39 +16,80 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository repository;
     private final PasswordEncoder encoder;
 
     public String create(Usuario usuario) {
 
-        String raw = generateToken();
-        String hash = encoder.encode(raw);
+        String rawToken = generateToken(); // secreto
+        String jti = generateToken();      // identificador público
+
+        String hash = encoder.encode(rawToken);
 
         RefreshToken entity = RefreshToken.builder()
                 .usuario(usuario)
                 .tokenHash(hash)
-                .jti(generateToken())
+                .jti(jti)
                 .expiracion(OffsetDateTime.now().plusDays(7))
                 .revocado(false)
                 .build();
 
-        refreshTokenRepository.save(entity);
+        repository.save(entity);
 
-        return raw;
+        return rawToken + "." + jti;
     }
 
-    public RefreshToken validate(String token, Long userId) {
+    public RefreshToken validate(String fullToken) {
 
-        return refreshTokenRepository.findByUsuarioIdAndRevocadoFalse(userId)
-                .stream()
-                .filter(t -> encoder.matches(token, t.getTokenHash()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("REFRESH INVALIDO"));
+        String[] parts = fullToken.split("\\.");
+
+        if (parts.length != 2) {
+            throw new RuntimeException("TOKEN MAL FORMADO");
+        }
+
+        String rawToken = parts[0];
+        String jti = parts[1];
+
+        RefreshToken entity = repository.findByJtiAndRevocadoFalse(jti)
+                .orElseThrow(() -> new RuntimeException("TOKEN NO EXISTE"));
+
+        if (entity.getExpiracion().isBefore(OffsetDateTime.now())) {
+            throw new RuntimeException("TOKEN EXPIRADO");
+        }
+
+        if (!encoder.matches(rawToken, entity.getTokenHash())) {
+            throw new RuntimeException("TOKEN INVALIDO");
+        }
+
+        return entity;
     }
 
-    public void revoke(RefreshToken token) {
+    @Transactional
+    public String rotate(RefreshToken token) {
+
         token.setRevocado(true);
-        refreshTokenRepository.save(token);
+        repository.save(token);
+
+        return create(token.getUsuario());
+    }
+
+    @Transactional
+    public void revoke(String fullToken) {
+
+        RefreshToken token = validate(fullToken);
+
+        token.setRevocado(true);
+        repository.save(token);
+    }
+
+    @Transactional
+    public void revokeAllByUser(Long userId) {
+        repository.revokeAllByUserId(userId);
+    }
+
+    @Transactional
+    public void cleanExpired() {
+        repository.deleteExpiredOrRevoked(OffsetDateTime.now());
     }
 
     private String generateToken() {

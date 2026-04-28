@@ -3,15 +3,13 @@ package com.pe.service.impl;
 import com.pe.model.dto.request.auth.LoginInputDto;
 import com.pe.model.dto.request.auth.RefreshInputDto;
 import com.pe.model.dto.response.auth.AuthOutputDto;
-import com.pe.model.entity.Usuario;
-import com.pe.repository.UsuarioRepository;
+import com.pe.model.entity.RefreshToken;
 import com.pe.security.jwt.JwtService;
 import com.pe.security.model.UserPrincipal;
 import com.pe.security.service.RefreshTokenService;
 import com.pe.service.IAuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,14 +35,40 @@ public class AuthServiceImpl implements IAuthService {
         var principal = (UserPrincipal) authentication.getPrincipal();
         var usuario = principal.getUsuario();
 
-        String access = jwtService.generateAccessToken(usuario);
-        String refresh = refreshService.create(usuario);
+        String accessToken = jwtService.generateAccessToken(usuario);
+        String refreshToken = refreshService.create(usuario);
 
-        return new AuthOutputDto(access, refresh);
+        return new AuthOutputDto(accessToken, refreshToken);
     }
 
     @Override
+    @Transactional
     public AuthOutputDto refresh(RefreshInputDto request) {
-        return null;
+
+        RefreshToken tokenEntity = refreshService.validate(request.refreshToken());
+
+        String newAccess = jwtService.generateAccessToken(tokenEntity.getUsuario());
+
+        String newRefresh = refreshService.rotate(tokenEntity);
+
+        return new AuthOutputDto(newAccess, newRefresh);
+    }
+
+    // =========================
+    // 🚪 LOGOUT (un dispositivo)
+    // =========================
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshService.revoke(refreshToken);
+    }
+
+    // =========================
+    // 🚪 LOGOUT GLOBAL
+    // =========================
+    @Override
+    @Transactional
+    public void logoutAll(Long userId) {
+        refreshService.revokeAllByUser(userId);
     }
 }
