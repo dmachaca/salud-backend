@@ -8,11 +8,11 @@ import com.pe.model.entity.*;
 import com.pe.model.mapper.PersonaMapper;
 import com.pe.model.mapper.UsuarioMapper;
 import com.pe.repository.*;
+import com.pe.security.crypto.PasswordService;
 import com.pe.service.IUsuarioService;
 import com.pe.transversal.enums.RolEnum;
 import com.pe.utils.SaludMensajesExcepcion;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final PacienteRepository pacienteRepository;
     private final RolRepository rolRepository;
     private final UsuarioRolRepository usuarioRolRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
 
     private final UsuarioMapper usuarioMapper;
     private final PersonaMapper personaMapper;
@@ -72,7 +72,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         Usuario usuario = usuarioMapper.toEntity(request.usuario());
 
         usuario.setPersona(persona);
-        usuario.setClaveHash(passwordEncoder.encode(request.usuario().clave()));
+        usuario.setClaveHash(passwordService.hash(request.usuario().clave()));
         usuario.setActivo(true);
 
         return usuarioRepository.save(usuario);
@@ -111,7 +111,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuario.setActivo(dto.activo());
 
         if (dto.clave() != null && !dto.clave().isBlank()) {
-            usuario.setClaveHash(passwordEncoder.encode(dto.clave()));
+            usuario.setClaveHash(passwordService.hash(dto.clave()));
         }
 
         usuario = usuarioRepository.save(usuario);

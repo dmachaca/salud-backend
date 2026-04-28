@@ -2,11 +2,14 @@ package com.pe.exception.global;
 
 import com.pe.exception.dto.ErrorResponse;
 import com.pe.exception.dto.ValidationError;
+import com.pe.security.exception.JwtAuthenticationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 @ControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
@@ -105,12 +109,32 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
 
-        ex.printStackTrace(); // log temporal
+        log.error("Error inesperado", ex);
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal server error",
+                "Error interno del servidor",
                 null
         );
     }
+
+    @ExceptionHandler(JwtAuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException() {
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Token inválido o expirado",
+                null
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Usuario o contraseña incorrectos",
+                null
+        );
+    }
+
 }

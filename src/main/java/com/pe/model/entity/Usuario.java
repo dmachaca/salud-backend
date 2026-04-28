@@ -45,6 +45,7 @@ public class Usuario extends BaseEntity {
     @Column(name = "nombre_usuario", nullable = false, length = 50)
     private String nombreUsuario;
 
+    @JsonIgnore
     @Column(name = "clave_hash", nullable = false)
     private String claveHash;
 
