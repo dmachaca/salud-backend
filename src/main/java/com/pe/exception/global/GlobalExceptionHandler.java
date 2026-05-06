@@ -1,5 +1,6 @@
 package com.pe.exception.global;
 
+import com.pe.exception.UsuarioException;
 import com.pe.exception.dto.ErrorResponse;
 import com.pe.exception.dto.ValidationError;
 import com.pe.security.exception.JwtAuthenticationException;
@@ -133,6 +134,16 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 HttpStatus.UNAUTHORIZED,
                 "Usuario o contraseña incorrectos",
+                null
+        );
+    }
+
+    @ExceptionHandler(UsuarioException.class)
+    public ResponseEntity<ErrorResponse> handleUsuarioException(UsuarioException ex) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 null
         );
     }
