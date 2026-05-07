@@ -1,10 +1,12 @@
 package com.pe.rest.controller;
 
+import com.pe.model.dto.request.cita.CitaFiltroInputDto;
 import com.pe.model.dto.request.cita.CrearCitaInputDto;
 import com.pe.model.dto.response.GenericResponse;
 import com.pe.service.ICitaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,6 +61,27 @@ public class CitaController extends BaseController {
     public ResponseEntity<GenericResponse> confirmarCita(
             @RequestBody @Valid CrearCitaInputDto request) {
         return handleRequest(() -> ok(citaService.confirmarCita(request)));
+    }
+
+    @PostMapping("/mis-citas")
+    public ResponseEntity<GenericResponse> obtenerMisCitas(
+            @RequestBody @Valid CitaFiltroInputDto request,
+            Pageable pageable
+    ) {
+
+        return handleRequest(() -> {
+
+            var result = citaService.obtenerMisCitas(
+                    request,
+                    pageable
+            );
+
+            GenericResponse response = new GenericResponse();
+            response.setSuccess(Boolean.TRUE);
+            response.setData(result);
+
+            return response;
+        });
     }
 
     private GenericResponse ok(Object data) {

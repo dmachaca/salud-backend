@@ -1,9 +1,15 @@
 package com.pe.service.impl;
 
 import com.pe.exception.NotFoundException;
+import com.pe.model.dto.request.cita.CitaFiltroInputDto;
 import com.pe.model.dto.request.cita.CrearCitaInputDto;
 import com.pe.model.dto.response.cita.*;
+import com.pe.repository.CitaRepository;
+import com.pe.security.service.SecurityService;
 import com.pe.service.ICitaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,7 +17,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
+@RequiredArgsConstructor
 public class CitaServiceImpl implements ICitaService {
+
+    private final CitaRepository citaRepository;
+    private final SecurityService securityService;
 
     private final AtomicLong citaSequence = new AtomicLong(1);
     private final List<CitaOutputDto> citasConfirmadas = new ArrayList<>();
@@ -170,5 +180,20 @@ public class CitaServiceImpl implements ICitaService {
                 .filter(item -> item.id().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Disponibilidad no encontrada"));
+    }
+
+    @Override
+    public Page<CitasOutputDto> obtenerMisCitas(
+            CitaFiltroInputDto filtroInputDto,
+            Pageable pageable
+    ) {
+
+        Long usuarioId = securityService.obtenerIdUsuarioActual();
+
+        return citaRepository.obtenerMisCitas(
+                usuarioId,
+                filtroInputDto,
+                pageable
+        );
     }
 }

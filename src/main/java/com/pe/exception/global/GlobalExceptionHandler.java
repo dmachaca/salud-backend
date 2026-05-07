@@ -1,5 +1,6 @@
 package com.pe.exception.global;
 
+import com.pe.exception.AccesoNoPermitidoException;
 import com.pe.exception.UsuarioException;
 import com.pe.exception.dto.ErrorResponse;
 import com.pe.exception.dto.ValidationError;
@@ -143,6 +144,18 @@ public class GlobalExceptionHandler {
 
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(AccesoNoPermitidoException.class)
+    public ResponseEntity<ErrorResponse> handleAccesoNoPermitido(
+            AccesoNoPermitidoException ex
+    ) {
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),
                 null
         );
